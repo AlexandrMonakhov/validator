@@ -1,8 +1,6 @@
 const form = document.getElementById('form'),
   formInputs = form.querySelectorAll('input');
 
-let valid = false;
-
 form.addEventListener('input', e => {
   const target = e.target;
   if (target.matches('input[name="name"]')) {
@@ -57,6 +55,35 @@ popupBtn.addEventListener('click', () => {
 });
 
 
+let valid = false;
+
+const validateCurrentInput = (event, inputs = []) => {
+  if (event.type === 'input') { // если тип эвента input
+    if (event.target.name === 'name') { // replace для поля name
+      event.target.value = event.target.value.replace(/[^а-яa-zA-ZА-ЯёЁё\- ]/g, '');
+    }
+    if (event.target.name === 'phone') { // replace для поля phone
+      event.target.value = event.target.value.replace(/[^+\-\(\)\d]/g, '');
+    }
+  } else if (event.type === 'submit') { // если тип эвента sumbit
+    // перебираем все инпуты и добавляем регулярки на test
+    inputs.forEach(input => {
+      if (input.name === 'name' && !/^[а-яa-zA-ZА-ЯёЁ\.\,\!\?]{2,15}\s{0,1}-{0,1}[а-яa-zA-ZА-ЯёЁ\.\,\!\?]{0,15}$/.test(input.value)) {
+        valid = false;
+        input.style.border = '1px solid red';
+      } else if (input.name === 'name' && /^[а-яa-zA-ZА-ЯёЁ\.\,\!\?]{2,15}\s{0,1}-{0,1}[а-яa-zA-ZА-ЯёЁ\.\,\!\?]{0,15}$/.test(input.value)) {
+        input.style.border = '1px solid #b99150';
+      }
+      if (input.name === 'phone' && !/\+?[78]([-()]*\d){10}$/.test(input.value)) {
+        valid = false;
+        input.style.border = '1px solid red';
+      } else if (input.name === 'phone' && /\+?[78]([-()]*\d){10}$/.test(input.value)) {
+        input.style.border = '1px solid #b99150';
+      }
+    })
+  }
+};
+
 const isValid = event => {
   event.preventDefault(); // отменяем стандартное поведение браузера
 
@@ -65,6 +92,8 @@ const isValid = event => {
     event.target.value.trim() === '' ? event.target.style.border = '1px solid red' : event.target.style.border = '1px solid #b99150';
     // перебираем все инпуты, если value не пустое, то устанавливаем флаг true, иначе false
     formInputs.forEach(input => input.value.trim !== '' ? valid = true : valid = false);
+    // вызов функции валидатора
+    validateCurrentInput(event);
   } else if (event.type === 'submit') { // если тип эвента submit
     // получаем все элементы у которых локальное имя input
     let inputCollection = [...event.target.elements].filter(item => item.localName === 'input');
@@ -75,12 +104,13 @@ const isValid = event => {
       // если значение у определенного инпута пустое, то устанавливаем красный бордер, иначе цвет по-умолчанию 
       item.value.trim() === '' ? item.style.border = '1px solid red' : item.style.border = '1px solid #b99150';
     });
+    // вызываем валидацию и передаем туда коллекцию инпутов
+    validateCurrentInput(event, inputCollection);
     // если флаг валидации true, то делаем отправку формы, иначе ничего
     valid === true ? sendForm() : null;
   }
 
 };
-
 
 form.addEventListener('input', isValid);
 
